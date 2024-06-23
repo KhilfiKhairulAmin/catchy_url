@@ -15,7 +15,7 @@ datasource db {
 
 model MapURL {
   id String @id @default(auto()) @map("_id") @db.ObjectId
-  fromUrl String 
-  toUrl String @unique
+  urlLink String 
+  urlName String @unique
   createdAt DateTime @default(now())
 }
