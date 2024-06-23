@@ -1,38 +1,49 @@
-import type { NextApiRequest, NextApiResponse } from 'next'
 import { PrismaClient } from '@prisma/client'
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library'
+import { NextRequest, NextResponse } from 'next/server'
 
 const prisma = new PrismaClient()
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
+/**
+ * This POST route is used to create new URL mapping.
+ * The data needed are `url` and `urlName`.
+ * This route returns `generatedUrl`; which is the shortened and customized URL. 
+ */
+export async function POST(
+  req: NextRequest
 ) {
   try {
-    if (req.method == 'POST') {
-      const data = await req.body
-  
-      if (!data?.url) res.status(400).json({ error: 'Please provide a URL link'})
-      if (!data?.urlName) res.status(400).json({ error: 'Please provide a URL name'})
-      
-      let { url, urlName }: { url: string, urlName: string } = data
-      
-      // Parse URL name
-      urlName.replace(' ', '_')
-  
+    const data: { url: string, urlName: string } = await req.json()
+
+    // Make sure data exists
+    if (!data?.url) return NextResponse.json({ error: 'Please provide a URL link'})
+    if (!data?.urlName) return NextResponse.json({ error: 'Please provide a URL name'})
+    
+    // Parse URL before storing in database
+    let { url, urlName }: { url: string, urlName: string } = data
+    urlName = urlName.replaceAll(' ', '_')
+
+    // Store in database
+    try {
       await prisma.mapURL.create({
         data: {
-          fromUrl: url,
-          toUrl: urlName
+          urlLink: url,
+          urlName
         }
       })
-      
-      return res.status(201).json({ generatedUrl: `${process.env.LOCAL_DOMAIN}/${urlName}` })
+    } catch (e) {
+      // Handle duplication error caused by URL name that has been taken by other user
+      if (e instanceof PrismaClientKnownRequestError && e.code === 'P2002') {
+        return NextResponse.json({ error: 'URL name has been taken' })
+      }
     }
-    else {
-      res.status(400).json({ error: 'Use POST method only on this route' })
-    }
+    
+    // Return the shortened and customized URL
+    return NextResponse.json({ generatedUrl: `${process.env.LOCAL_DOMAIN}/${urlName}` })
+
   } catch(e) {
+    // Unknown error cases
     console.error(e)
-    res.status(500).json({ error: 'Some error occurred on the server' })
+    NextResponse.json({ error: 'Something wrong occurred' })
   }
 }
