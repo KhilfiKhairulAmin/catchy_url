@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import Image from "next/image";
+import Link from "next/link";
+import ToastProvider from "./ToastProvider";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -17,22 +19,36 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={inter.className}>
+      <body className={inter.className + " bg-gray-200"}>
         <header>
-          <div className="flex justify-center align-middle">
-            <Image
-              className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-              src="/next.svg"
-              alt="Next.js Logo"
-              width={180}
-              height={37}
-              priority
-            />
+          <div className="flex justify-center align-middle bg-white">
+            <Link href={process.env.LOCAL_DOMAIN || ''}>
+              <Image
+                src="/catchyUrl.png"
+                alt="Catchy URL Logo"
+                width={235}
+                height={37}
+                priority
+                className=" mt-3 mb-2"
+              />
+            </Link>
           </div>
+          <hr className=" border-gray-300 border-2" />
         </header>
         <main>
-          {children}
+          <div className="flex justify-center mt-10 w-full">
+          <ToastProvider>
+            {children}
+          </ToastProvider>
+          </div>
         </main>
+        <footer>
+          <div className="flex justify-center w-full">
+            <p className="text-sm text-gray-500 text-center mt-4">
+              Created by <Link href="https://github.com/KhilfiKhairulAmin">KhilfiKhairulAmin</Link> for <Link href="https://github.com/iZERITH">iZERITH</Link>
+            </p>
+          </div>
+        </footer>
       </body>
     </html>
   );
